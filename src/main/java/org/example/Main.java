@@ -4,19 +4,27 @@ import io.javalin.Javalin;
 import io.javalin.apibuilder.ApiBuilder.*;
 import org.example.book.BookController;
 import org.example.utils.HealthCheckController;
+import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class Main {
     public static void main(String[] args) {
         var app = Javalin.create(javalinConfig -> {
             javalinConfig.jetty.defaultPort = 7070;
             javalinConfig.useVirtualThreads = true;
-                })
-                .get("/", ctx -> ctx.result("Hello World"))
-                .get("/health", HealthCheckController::healthCheck)
-                .get("/books" ,BookController::GetAllBooks)
-                .get("/books/{id}", BookController::fetchByID)
-                .post("/books/create", BookController::createBook)
-                .patch("/books/{id}", BookController::updateBookByID)
-                .start(7070);
+            javalinConfig.router.apiBuilder(() -> {
+                get("/", ctx -> ctx.result("Hello Javalin"));
+                path("api/health", () -> {
+                    get(HealthCheckController::healthCheck);
+                });
+                path("api/books", () -> {
+                    get(BookController::GetAllBooks);
+                    post("/create", BookController::createBook);
+                    path("/{id}", () -> {
+                        get(BookController::fetchByID);
+                        patch(BookController::updateBookByID);
+                    });
+                });
+            });
+        }).start();
     }
 }
