@@ -20,27 +20,53 @@ public class BookController {
         ctx.json(allBooks);
     };
 
-    public static void fetchByID  (Context ctx){
+    public static void fetchByID(Context ctx) {
         try {
             int id = Integer.parseInt(Objects.requireNonNull(ctx.pathParam("id")));
-            System.out.println("Fetching book with ID: " + id);
             BookDao dao = BookDao.instance();
-            Optional<Book> book = dao.getBookByID(id);
-            if (book.isPresent()) {
-                System.out.println("Book found: " + book.get());
-                ctx.json(book.get());
+            Optional<Book> bookOptional = dao.getBookByID(id);
+
+            if (bookOptional.isPresent()) {
+                Book book = bookOptional.get();
+                // Простой Map только с нужными полями
+                Map<String, String> response = Map.of(
+                        "title", book.getTitle(),
+                        "author", book.getAuthor()
+                );
+                ctx.json(response);
             } else {
-                System.out.println("Book not found for ID: " + id);
                 ctx.status(404).html("Book Not Found");
             }
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             ctx.status(400).json(Map.of("error", "Invalid ID format"));
         } catch (Exception e) {
-            e.printStackTrace();
-            ctx.status(500).json(Map.of("error", "Internal Server Error: " + e.getMessage()));
+            ctx.status(500).json(Map.of("error", "Internal Server Error"));
         }
-    };
+    }
+
+    public static void fetchByAuthor(Context ctx) {
+        try {
+            String author = (Objects.requireNonNull(ctx.queryParam("author")));
+            BookDao dao = BookDao.instance();
+            Optional<Book> bookOptional = dao.getBookByAuthor(author);
+            if (bookOptional.isPresent()) {
+                Book book = bookOptional.get();
+                // Простой Map только с нужными полями
+                Map<String, String> response = Map.of(
+                        "id", String.valueOf(book.getId()),
+                        "title", book.getTitle()
+                );
+                ctx.json(response);
+            } else {
+                ctx.status(404).html("Book Not Found");
+            }
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(Map.of("error", "Invalid author format"));
+        } catch (Exception e) {
+            ctx.status(500).json(Map.of("error", "Internal Server Error"));
+        }
+    }
+
 
     public static void updateBookByID(Context ctx) {
         try {
@@ -60,22 +86,20 @@ public class BookController {
                 // Обработка JSON (raw data)
                 Book bookUpdate = ctx.bodyAsClass(Book.class);
                 title = bookUpdate.getTitle();
-                genre = bookUpdate.getGenre();
                 author = bookUpdate.getAuthor();
             } else {
                 // Обработка form-data
                 title = ctx.formParam("title");
-                genre = ctx.formParam("genre");
                 author = ctx.formParam("author");
             }
 
-            if (title == null || genre == null || author == null) {
+            if (title == null  || author == null) {
                 ctx.status(400).json(Map.of("error", "Missing required parameters"));
                 return;
             }
             System.out.println("Updating book with ID: " + id);
             BookDao dao = BookDao.instance();
-            Optional<Book> book = dao.updateBookByID(id, title, genre, author);
+            Optional<Book> book = dao.updateBookByID(id, title , author);
             if (book.isPresent()) {
                 System.out.println("Book updated: " + book.get());
                 ctx.status(200).json(book.get());
@@ -93,9 +117,7 @@ public class BookController {
 
     public static void createBook(Context ctx) {
         try {
-            String title;
-            String genre;
-            String author;
+            String title;String author;
 
             // Проверяем Content-Type
             String contentType = ctx.header("Content-Type");
@@ -107,22 +129,20 @@ public class BookController {
                 System.out.println("Received JSON: " + bookUpdate);
 
                 title = bookUpdate.getTitle();
-                genre = bookUpdate.getGenre();
                 author = bookUpdate.getAuthor();
             } else {
                 // Обработка form-data
                 title = ctx.formParam("title");
-                genre = ctx.formParam("genre");
                 author = ctx.formParam("author");
             }
 
             // Check if any of the parameters are null or empty
-            if (title == null || genre == null || author == null || title.isEmpty() || genre.isEmpty() || author.isEmpty()) {
+            if (title == null  || author == null || title.isEmpty() || author.isEmpty()) {
                 ctx.status(400).json(Map.of("error", "Missing required parameters"));
                 return;
             }
             BookDao dao = BookDao.instance();
-            Optional<Book> book = dao.createBook(title, genre, author);
+            Optional<Book> book = dao.createBook(title, author);
             if (book.isPresent()) {
                 // Log the book data before creation
                 System.out.println("Book created: " + book.get());
