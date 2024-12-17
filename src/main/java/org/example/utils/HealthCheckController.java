@@ -12,7 +12,6 @@ public class HealthCheckController {
 
     public static void healthCheck(Context ctx) {
         Map<String, Object> healthStatus = new HashMap<>();
-        boolean isHealthy = true;
 
         // Проверка доступности сервера
         healthStatus.put("status", "UP");

@@ -5,9 +5,6 @@ import io.javalin.http.Context;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.example.book.BookRepository.findByID;
-
 public class BookController {
     private static final Logger logger = LoggerFactory.getLogger(BookController.class);
     public static void GetAllBooks  (Context ctx) {
