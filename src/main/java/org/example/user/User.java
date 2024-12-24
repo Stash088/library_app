@@ -17,5 +17,37 @@ public class User {
     String email;
 
     @JsonProperty("code_reader")
-     code_reader;
+    String code_reader;
+
+    public String getCode_reader() {
+        return code_reader;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public String getFirst_name() {
+        return first_name;
+    }
+    public int getId() {
+        return id;
+    }
+    public String getLast_name() {
+        return last_name;
+    }
+    public void setCode_reader(String code_reader) {
+        this.code_reader = code_reader;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public void setFirst_name(String first_name) {
+        this.first_name = first_name;
+    }
+    public void setId(int id) {
+        this.id = id;
+    }
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

@@ -1,10 +1,12 @@
 package org.example.book;
 
 import java.util.*;
-import io.javalin.http.Context;
+import java.util.stream.Collectors;
 
+import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 public class BookController {
     private static final Logger logger = LoggerFactory.getLogger(BookController.class);
     public static void GetAllBooks  (Context ctx) {
@@ -26,7 +28,12 @@ public class BookController {
 
     public static void fetchByID(Context ctx) {
         try {
-            int id = Integer.parseInt((ctx.pathParam("id")));
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            if (id < 0) {
+                ctx.status(400).json(Map.of("error", "Invalid ID: must be non-negative"));
+                logger.error("Invalid negative ID: {}", id);
+                return;
+            }
             logger.debug("Fetching book with id: {}", id);
             Book book = BookRepository.findByID(id);
             if (book != null) {
@@ -47,121 +54,106 @@ public class BookController {
             ctx.status(400).json(Map.of("error", "Invalid ID format"));
             logger.error("Invalid ID format: {}", ctx.pathParam("id"));
         } catch (Exception e) {
-            logger.error("Error fetching book: ", e);
+            logger.error("Server Error fetching book: ", e);
             ctx.status(500).json(Map.of("error", "Internal Server Error"));
         }
     }
 
-//    public static void fetchByAuthor(Context ctx) {
-//        try {
-//            String author = (Objects.requireNonNull(ctx.queryParam("author")));
-//            BookDao dao = BookDao.instance();
-//            Optional<Book> bookOptional = dao.getBookByAuthor(author);
-//            if (bookOptional.isPresent()) {
-//                Book book = bookOptional.get();
-//                // Простой Map только с нужными полями
-//                Map<String, String> response = Map.of(
-//                        "id", String.valueOf(book.getId()),
-//                        "title", book.getTitle()
-//                );
-//                ctx.json(response);
-//            } else {
-//                ctx.status(404).html("Book Not Found");
-//            }
-//        } catch (NumberFormatException e) {
-//            ctx.status(400).json(Map.of("error", "Invalid author format"));
-//        } catch (Exception e) {
-//            ctx.status(500).json(Map.of("error", "Internal Server Error"));
-//        }
-//    }
-//
-//
-//    public static void updateBookByID(Context ctx) {
-//        try {
-//            int id = Integer.parseInt(Objects.requireNonNull(ctx.pathParam("id")));
-//            if (id <= 0) {
-//                ctx.status(400).json(Map.of("error", "Invalid ID"));
-//                return;
-//            }
-//
-//            String title;
-//            String genre;
-//            String author;
-//
-//            // Проверяем Content-Type
-//            String contentType = ctx.header("Content-Type");
-//            if (contentType != null && contentType.contains("application/json")) {
-//                // Обработка JSON (raw data)
-//                Book bookUpdate = ctx.bodyAsClass(Book.class);
-//                title = bookUpdate.getTitle();
-//                author = bookUpdate.getAuthor();
-//            } else {
-//                // Обработка form-data
-//                title = ctx.formParam("title");
-//                author = ctx.formParam("author");
-//            }
-//
-//            if (title == null  || author == null) {
-//                ctx.status(400).json(Map.of("error", "Missing required parameters"));
-//                return;
-//            }
-//            System.out.println("Updating book with ID: " + id);
-//            BookDao dao = BookDao.instance();
-//            Optional<Book> book = dao.updateBookByID(id, title , author);
-//            if (book.isPresent()) {
-//                System.out.println("Book updated: " + book.get());
-//                ctx.status(200).json(book.get());
-//            } else {
-//                System.out.println("Book not found for ID: " + id);
-//                ctx.status(404).json(Map.of("error", "Book Not Found"));
-//            }
-//        } catch (NumberFormatException e) {
-//            ctx.status(400).json(Map.of("error", "Invalid ID format"));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            ctx.status(500).json(Map.of("error", "Internal Server Error: " + e.getMessage()));
-//        }
-//    }
-//
-//    public static void createBook(Context ctx) {
-//        try {
-//            String title;String author;
-//
-//            // Проверяем Content-Type
-//            String contentType = ctx.header("Content-Type");
-//            if (contentType != null && contentType.contains("application/json")) {
-//                // Обработка JSON (raw data)
-//                Book bookUpdate = ctx.bodyAsClass(Book.class);
-//
-//                // Log for debugging
-//                System.out.println("Received JSON: " + bookUpdate);
-//
-//                title = bookUpdate.getTitle();
-//                author = bookUpdate.getAuthor();
-//            } else {
-//                // Обработка form-data
-//                title = ctx.formParam("title");
-//                author = ctx.formParam("author");
-//            }
-//
-//            // Check if any of the parameters are null or empty
-//            if (title == null  || author == null || title.isEmpty() || author.isEmpty()) {
-//                ctx.status(400).json(Map.of("error", "Missing required parameters"));
-//                return;
-//            }
-//            BookDao dao = BookDao.instance();
-//            Optional<Book> book = dao.createBook(title, author);
-//            if (book.isPresent()) {
-//                // Log the book data before creation
-//                System.out.println("Book created: " + book.get());
-//                ctx.status(200).json(book.get());
-//            } else {
-//                ctx.status(404).json(Map.of("error", "Book Not Found"));
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            ctx.status(500).json(Map.of("error", "Internal Server Error: " + e.getMessage()));
-//        }
-//    }
-}
 
+    public static void updateBookByID(Context ctx) {
+        try {
+            int id = Integer.parseInt(Objects.requireNonNull(ctx.pathParam("id")));
+            if (id <= 0) {
+                ctx.status(400).json(Map.of("error", "Invalid ID"));
+                logger.error("Invalid ID");
+                return;
+            }
+            Book bookUpdate = null;
+            String contentType = ctx.header("Content-Type");
+            if (contentType != null && contentType.contains("application/json")) {
+                bookUpdate = ctx.bodyAsClass(Book.class);
+            } else {
+                logger.error("Invalid Content-Type");
+                ctx.status(400).json(Map.of("error", "Invalid Content-Type"));
+                return;
+            }
+            Optional<Book> updatedBook = BookRepository.updateBookByID(id, bookUpdate);
+            if (updatedBook.isPresent()) {
+                logger.info("Book updated: " + updatedBook.get());
+                ctx.status(200);
+            } else {
+                logger.error("Book not found for ID: " + id);
+                ctx.status(404).json(Map.of("error", "Book Not Found"));
+            }
+        } catch (NumberFormatException e) {
+            logger.error("Invalid ID format");
+            ctx.status(400).json(Map.of("error", "Invalid ID format"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Internal Server Error");
+            ctx.status(500).json(Map.of("error", "Internal Server Error: " + e.getMessage()));
+        }
+    }
+    public static void searchBooks(Context ctx) {
+        try {
+            Map<String, String> searchParams = new HashMap<>();
+            // Получаем все параметры запроса
+            ctx.queryParamMap().forEach((key, values) -> {
+                if (!values.isEmpty()) {
+                    searchParams.put(key, values.get(0));
+                }
+            });
+
+            Integer copiesCount = null;
+            if (searchParams.containsKey("copies_count")) {
+                try {
+                    copiesCount = Integer.parseInt(searchParams.get("copies_count"));
+                    if (copiesCount < 0) {
+                        ctx.status(400).json(Map.of("error", "Invalid copies count: must be non-negative"));
+                        logger.error("Invalid negative copies count: {}", copiesCount);
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    ctx.status(400).json(Map.of("error", "Invalid copies count format"));
+                    logger.error("Invalid copies count format: {}", searchParams.get("copies_count"));
+                    return;
+                }
+            }
+
+            logger.debug("Searching for books with parameters: {}", searchParams);
+
+            List<Book> books = BookRepository.search(
+                searchParams.get("title"),
+                searchParams.get("author"),
+                searchParams.get("isbn"),
+                searchParams.get("genre"),
+                copiesCount,
+                searchParams.get("status")
+            );
+
+            if (!books.isEmpty()) {
+                List<Map<String, Object>> response = books.stream()
+                    .map(book -> {
+                        Map<String, Object> bookMap = new HashMap<>();
+                        bookMap.put("title", book.getTitle());
+                        bookMap.put("author", book.getAuthor());
+                        bookMap.put("isbn", book.getIsbn());
+                        bookMap.put("genre", book.getGenre());
+                        bookMap.put("copies_count", book.getCopiesCount());
+                        bookMap.put("status", book.getStatus());
+                        return bookMap;
+                    })
+                    .collect(Collectors.toList());
+                
+                ctx.json(response);
+                logger.debug("Found {} books matching the search criteria", books.size());
+            } else {
+                ctx.status(404).json(Map.of("message", "No books found matching the criteria"));
+                logger.info("No books found for the given search criteria");
+            }
+        } catch (Exception e) {
+            logger.error("Server Error during book search: ", e);
+            ctx.status(500).json(Map.of("error", "Internal Server Error"));
+        }
+    }
+}

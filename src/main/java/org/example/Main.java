@@ -1,6 +1,5 @@
 package org.example;
 import io.javalin.Javalin;
-
 import org.example.book.BookController;
 import org.example.utils.HealthCheckController;
 import static io.javalin.apibuilder.ApiBuilder.*;
@@ -17,11 +16,13 @@ public class Main {
                 });
                 path("api/books", () -> {
                         get(BookController::GetAllBooks);
+                    path("/search", () -> {
+                            get(BookController::searchBooks);
+                        });
                     path("/{id}", () -> {
                         get(BookController::fetchByID);
-                        
+                        put(BookController::updateBookByID);
                     });
-
                 });
             });
         }).start();
