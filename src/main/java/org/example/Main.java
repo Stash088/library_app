@@ -4,13 +4,10 @@ import io.javalin.Javalin;
 import org.example.book.BookController;
 import org.example.book.BookService;
 import org.example.utils.HealthCheckController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class Main {
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         BookService bookService = new BookService();
         BookController bookController = new BookController(bookService);

@@ -33,7 +33,10 @@ build/
 
 ### VS Code ###
 .vscode/
+.idea/
 
 ### Mac OS ###
 .DS_Store
 src/main/resources/db
+src/main/java/org/example/Main.java
+dependency-reduced-pom.xml

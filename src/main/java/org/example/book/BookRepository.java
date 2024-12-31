@@ -61,7 +61,6 @@ public class BookRepository {
                 book = new Book(id, title, author, isbn, genre, copies_count, status);
             }
             logger.info(query);
-            logger.info(book.toString());
         } catch (SQLException e) {
             e.printStackTrace();
             logger.error("Books with id {} not found", id);
