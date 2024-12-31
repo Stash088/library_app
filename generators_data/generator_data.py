@@ -31,7 +31,7 @@ def generate_isbn():
     return ''.join(random.choices(string.digits, k=13))
 
 # Connect to the SQLite database (or create a new one if it doesn't exist)
-conn = sqlite3.connect('/Users/amir/Desktop/javalin_project/src/main/resources/db')
+conn = sqlite3.connect('library_app/src/main/resources/db')
 cursor = conn.cursor()
 
 # Create the table if it doesn't exist

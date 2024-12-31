@@ -12,7 +12,7 @@ public class Database {
 
     static {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:sqlite:library_app/src/main/resources/db"); // Путь
+        config.setJdbcUrl("jdbc:sqlite:src/main/resources/db"); // Путь
         config.setDriverClassName("org.sqlite.JDBC");
         config.setMaximumPoolSize(10); // Максимальное количество соединений в пуле
         dataSource = new HikariDataSource(config);
